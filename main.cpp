@@ -7,14 +7,9 @@ struct Snake {
     short y;
 };
 
-struct Food{
-    short x;
-    short y;
-};
+void foodCheck(std::vector<Snake>& sVector, Snake& food, int& slTime, const int slTimeStep, int& points, const int rows, const int cols, const char pointsString[], const char speedString[], char F);
 
-void foodCheck(std::vector<Snake>& sVector, Food& food, int& slTime, const int slTimeStep, int& points, const int rows, const int cols, std::string pointsString, char F);
-
-void move(std::vector<Snake>& sVector, COORD& coordSnake, const int ROW, const int COL, int numPath, bool& gameRun, char S);
+void move(std::vector<Snake>& sVector, COORD& coordSnake, const int rows, const int cols, int numPath, bool& gameRun, char S);
 
 int main()
 {
@@ -27,27 +22,27 @@ int main()
     int slTime = 500;
     int slTimeStep = 10;
     int points = 0;
-    char S = 'S';
-    char F = 'F';
-    char M = '#';
-    std::string pointsString = "\tОчки: ";
-    std::string gameOver = "\tИгра закончена!";
-    //int chek = 0;
+    char simbolSnake = 'S';
+    char simbolFood = 'F';
+    char simbolMap = '#';
+    char speedString[]{ "\tСкорость: " };
+    char pointsString[]{ "\tОчки: " };
+    char gameOver[]{ "\tИгра закончена!" };
 
     short numPath = 3;
     bool gameRun = true;
     bool foodNext = true;
     COORD coordSnake{ 0,0 };
 
-    Food food{};
-    food.x = 3;//6 + rand() % (COL - 8);
-    food.y = rows / 2;//1 + rand() % (ROW - 2);
+    Snake food{};
+    food.x = 6 + rand() % (cols - 8);
+    food.y = 1 + rand() % (rows - 2);
     std::vector<Snake> snakeVector{ {2,rows / 2} };
 
     CONSOLE_CURSOR_INFO curs = { 0 };
     curs.dwSize = sizeof(curs);
     curs.bVisible = FALSE;
-    ::SetConsoleCursorInfo(::GetStdHandle(STD_OUTPUT_HANDLE), &curs);
+    SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &curs);
 
     char arr[rows][cols]{};
     for (int i = 0; i < rows; i++) {
@@ -57,7 +52,7 @@ int main()
                 std::cout << arr[i][j];
             }
             else {
-                arr[i][j] = M;
+                arr[i][j] = simbolMap;
                 std::cout << arr[i][j];
             }
         }
@@ -65,12 +60,12 @@ int main()
     }
 
     std::cout << std::endl << std::endl << pointsString << points;
-    //std::cout << std::endl << chek;
+    std::cout << std::endl << speedString << slTimeStep;
 
     coordSnake.X = food.x;
     coordSnake.Y = food.y;
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coordSnake);
-    std::cout << F;
+    std::cout << simbolFood;
 
     do
     {
@@ -100,27 +95,29 @@ int main()
             system("pause > null");
         }
 
-        foodCheck(snakeVector, food, slTime, slTimeStep, points, rows, cols, pointsString, F);
-        move(snakeVector, coordSnake, rows, cols, numPath, gameRun, S);
+        foodCheck(snakeVector, food, slTime, slTimeStep, points, rows, cols, pointsString, speedString, simbolFood);
+        move(snakeVector, coordSnake, rows, cols, numPath, gameRun, simbolSnake);
     } while (gameRun);
 
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coordSnake);
     std::cout << pointsString << points << std::endl;
-    //std::cout << chek << std::endl;
+    std::cout << speedString << slTime << std::endl;
     std::cout << gameOver << std::endl;
 
     system("pause > null");
     return 0;
 }
 
-void foodCheck(std::vector<Snake>& sVector, Food& food, int& slTime, const int slTimeStep, int& points, const int rows, const int cols, std::string pointsString, char F) {
+void foodCheck(std::vector<Snake>& sVector, Snake& food, int& slTime, const int slTimeStep, int& points, const int rows, const int cols, const char pointsString[], const char speedString[], char F) {
     bool foodNext = true;
+    static int speed = slTimeStep;
     COORD snake{};
     snake.X = sVector.at(0).x;
     snake.Y = sVector.at(0).y;
 
     if (food.x == snake.X && food.y == snake.Y) {
         slTime -= slTimeStep;
+        speed += slTimeStep;
         if (slTime < 100) {
             slTime = 100;
         }
@@ -128,6 +125,7 @@ void foodCheck(std::vector<Snake>& sVector, Food& food, int& slTime, const int s
         snake.Y = rows + 2;
         SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), snake);
         std::cout << pointsString << ++points;
+        std::cout << std::endl << speedString << speed;
         food.x = 1 + rand() % (cols - 2);
         food.y = 1 + rand() % (rows - 2);
         foodNext = true;
@@ -152,7 +150,8 @@ void foodCheck(std::vector<Snake>& sVector, Food& food, int& slTime, const int s
     }
 }
 
-void move(std::vector<Snake>& sVector, COORD& coordSnake, const int ROW, const int COL, int numPath, bool& gameRun, char S) {
+
+void move(std::vector<Snake>& sVector, COORD& coordSnake, const int rows, const int cols, int numPath, bool& gameRun, char S) {
     COORD coordSnakeBlock{ 0,0 };
 
     coordSnake.X = sVector.at(0).x;
@@ -167,7 +166,7 @@ void move(std::vector<Snake>& sVector, COORD& coordSnake, const int ROW, const i
         std::cout << " ";
         sVector.at(0).x = coordSnake.X;
         sVector.at(0).y = coordSnake.Y;
-        for (int i = (int)sVector.size() - 1, j = 0; i > 0; i--) {
+        for (size_t i = sVector.size() - 1, j = 0; i > 0; i--) {
             j = i - 1;
             sVector.at(i).x = sVector.at(j).x;
             sVector.at(i).y = sVector.at(j).y;
@@ -188,42 +187,42 @@ void move(std::vector<Snake>& sVector, COORD& coordSnake, const int ROW, const i
     }
 
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coordSnake);
-    std::cout << "S";
+    std::cout << S;
     if (sVector.size() > 1) {
         coordSnakeBlock.X = sVector.at(0).x;
         coordSnakeBlock.Y = sVector.at(0).y;
         SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coordSnakeBlock);
-        std::cout << "S";
+        std::cout << S;
         for (int i = (int)sVector.size() - 1; i > 0; i--) {
             coordSnakeBlock.X = sVector.at(i).x;
             coordSnakeBlock.Y = sVector.at(i).y;
             SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coordSnakeBlock);
-            std::cout << "S";
+            std::cout << S;
         }
     }
 
     sVector.at(0).x = coordSnake.X;
     sVector.at(0).y = coordSnake.Y;
 
-    if (coordSnake.X == COL - 1) {
+    if (coordSnake.X == cols - 1) {
         gameRun = false;
         coordSnake.X = 0;
-        coordSnake.Y = ROW + 2;
+        coordSnake.Y = rows + 2;
     }
     if (coordSnake.X == 0) {
         gameRun = false;
         coordSnake.X = 0;
-        coordSnake.Y = ROW + 2;
+        coordSnake.Y = rows + 2;
     }
-    if (coordSnake.Y == ROW - 1) {
+    if (coordSnake.Y == rows - 1) {
         gameRun = false;
         coordSnake.X = 0;
-        coordSnake.Y = ROW + 2;
+        coordSnake.Y = rows + 2;
     }
     if (coordSnake.Y == 0) {
         gameRun = false;
         coordSnake.X = 0;
-        coordSnake.Y = ROW + 2;
+        coordSnake.Y = rows + 2;
     }
 
     if (sVector.size() > 2) {
@@ -231,7 +230,7 @@ void move(std::vector<Snake>& sVector, COORD& coordSnake, const int ROW, const i
             if ((sVector.at(0).x == sVector.at(i).x) && (sVector.at(0).y == sVector.at(i).y)) {
                 gameRun = false;
                 coordSnake.X = 0;
-                coordSnake.Y = ROW + 2;
+                coordSnake.Y = rows + 2;
             }
         }
     }
